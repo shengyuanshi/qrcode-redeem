@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  qrcode-system:
+    build: .
+    ports:
+      - "80:80"
+    volumes:
+      - ./codes.csv:/app/codes.csv
+      - ./static:/app/static
+    restart: unless-stopped
+    environment:
+      - FLASK_ENV=production
+    container_name: qrcode-system 

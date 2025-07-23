@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>领取兑换码</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        
+        .claim-button {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            font-size: 1.2em;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px rgba(255, 107, 107, 0.3);
+            margin: 20px 0;
+        }
+        
+        .claim-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(255, 107, 107, 0.4);
+        }
+        
+        .claim-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .result {
+            margin: 30px 0;
+            padding: 20px;
+            border-radius: 15px;
+            font-size: 1.1em;
+            font-weight: bold;
+            display: none;
+        }
+        
+        .result.success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+        
+        .result.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+        
+        .code-display {
+            font-size: 2em;
+            font-weight: bold;
+            color: #28a745;
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px dashed #28a745;
+            display: none;
+        }
+        
+        .loading {
+            display: none;
+            margin: 20px 0;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .back-link {
+            margin-top: 30px;
+            display: block;
+            color: #007bff;
+            text-decoration: none;
+            font-size: 1.1em;
+        }
+        
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎁 领取兑换码</h1>
+        
+        <p style="color: #666; margin-bottom: 30px; font-size: 1.1em;">
+            点击下方按钮领取您的专属兑换码
+        </p>
+        
+        <button id="claimBtn" class="claim-button" onclick="claimCode()">
+            🎯 立即领取
+        </button>
+        
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 10px; color: #666;">正在为您分配兑换码...</p>
+        </div>
+        
+        <div id="result" class="result"></div>
+        
+        <div id="codeDisplay" class="code-display"></div>
+        
+        <a href="/" class="back-link">← 返回首页</a>
+    </div>
+
+    <script>
+        function claimCode() {
+            const claimBtn = document.getElementById('claimBtn');
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+            const codeDisplay = document.getElementById('codeDisplay');
+            
+            // 禁用按钮并显示加载状态
+            claimBtn.disabled = true;
+            claimBtn.textContent = '领取中...';
+            loading.style.display = 'block';
+            result.style.display = 'none';
+            codeDisplay.style.display = 'none';
+            
+            // 发送请求
+            fetch('/api/claim', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // 隐藏加载状态
+                loading.style.display = 'none';
+                result.style.display = 'block';
+                
+                if (data.success) {
+                    // 成功领取
+                    result.className = 'result success';
+                    result.textContent = data.message;
+                    
+                    // 显示兑换码
+                    codeDisplay.style.display = 'block';
+                    codeDisplay.textContent = data.code;
+                    
+                    // 更新按钮状态
+                    claimBtn.textContent = '已领取';
+                    claimBtn.disabled = true;
+                    
+                } else {
+                    // 领取失败
+                    result.className = 'result error';
+                    result.textContent = data.message;
+                    
+                    // 恢复按钮状态
+                    claimBtn.textContent = '🎯 立即领取';
+                    claimBtn.disabled = false;
+                }
+            })
+            .catch(error => {
+                // 处理错误
+                loading.style.display = 'none';
+                result.style.display = 'block';
+                result.className = 'result error';
+                result.textContent = '网络错误，请稍后重试';
+                
+                // 恢复按钮状态
+                claimBtn.textContent = '🎯 立即领取';
+                claimBtn.disabled = false;
+                
+                console.error('Error:', error);
+            });
+        }
+    </script>
+</body>
+</html> 
